@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Benalmádena Map with 100km Radius</title>
+    <style>
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        .radius-controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: white;
+            padding: 15px;
+            border-radius: 4px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            z-index: 1000;
+            width: 200px;
+        }
+        .radius-controls label {
+            display: block;
+            margin-bottom: 8px;
+            font-family: Arial, sans-serif;
+        }
+        .radius-controls input[type="number"] {
+            width: 80px;
+            padding: 4px;
+            margin-bottom: 8px;
+        }
+        .radius-controls input[type="range"] {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="radius-controls">
+        <label>Radius (km):</label>
+        <input type="number" id="radiusInput" value="100" min="1" max="500" oninput="updateRadius(this.value)">
+        <input type="range" id="radiusSlider" value="100" min="1" max="500" oninput="updateRadius(this.value)">
+    </div>
+    <div id="map"></div>
+
+    <!-- Load the API key configuration -->
+    <script src="config.js"></script>
+    
+    <script>
+        let circle;
+        let map;
+        
+        function initMap() {
+            // Coordinates for Benalmádena, Spain
+            const benalmadena = { lat: 36.5978, lng: -4.5166 };
+            
+            // Create the map centered on Benalmádena
+            map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 9,
+                center: benalmadena,
+                mapTypeId: "roadmap"
+            });
+
+            // Create a circle with 100km radius
+            circle = new google.maps.Circle({
+                strokeColor: "#FF0000",
+                strokeOpacity: 0.8,
+                strokeWeight: 2,
+                fillColor: "#FF0000",
+                fillOpacity: 0.15,
+                map,
+                center: benalmadena,
+                radius: 100000  // 100km in meters
+            });
+
+            // Set initial view
+            centerAndZoomCircle();
+        }
+
+        function centerAndZoomCircle() {
+            if (circle && map) {
+                const bounds = circle.getBounds();
+                if (bounds) {
+                    map.fitBounds(bounds, {
+                        padding: {
+                            top: 50,
+                            right: 50,
+                            bottom: 50,
+                            left: 50
+                        }
+                    });
+                    
+                    // After fitting bounds, adjust zoom out slightly for better visibility
+                    const currentZoom = map.getZoom();
+                    if (currentZoom) {
+                        map.setZoom(currentZoom - 0.5);
+                    }
+                }
+            }
+        }
+
+        function updateRadius(kilometers) {
+            // Update both controls to stay in sync
+            document.getElementById('radiusInput').value = kilometers;
+            document.getElementById('radiusSlider').value = kilometers;
+            
+            // Update the circle radius (convert km to meters)
+            if (circle) {
+                const radiusInMeters = kilometers * 1000;
+                circle.setRadius(radiusInMeters);
+                
+                // Center and zoom to maintain full screen view
+                centerAndZoomCircle();
+            }
+        }
+    </script>
+    <script>
+        // Dynamically create and append the Google Maps script with the API key
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&callback=initMap`;
+        script.async = true;
+        script.defer = true;
+        document.body.appendChild(script);
+    </script>
+</body>
+</html> 
